@@ -3,34 +3,34 @@
 #include <string>
 #include <algorithm>
 #include <sstream>
+#include <queue>
 using namespace std;
 
-#define TEST
+//#define TEST
 #ifdef TEST
 #include <gtest/gtest.h>
 #endif
 
-std::vector<int> save_data(const std::string &line) {
-    std::vector<int> inputs;
+std::priority_queue<int, vector<int>, greater<int>> save_data(const std::string &line) {
+    std::priority_queue<int, vector<int>, greater<int>> inputs;
     int number;
     std::stringstream stream(line);
     while (stream >> number) {
-        inputs.push_back(number);
+        inputs.push(number);
     }
     return inputs;
 }
 
-int get_total_cost(std::vector<int> &inputs) {
+int get_total_cost(std::priority_queue<int, vector<int>, greater<int>> &inputs) {
     int cost = 0;
     int min_1, min_2;
     while (inputs.empty() == false) {
-        std::sort(inputs.begin(), inputs.end(), std::greater<int>());
-        min_1 = inputs.back();
-        inputs.pop_back();
-        min_2 = inputs.back();
-        inputs.pop_back();
+        min_1 = inputs.top();
+        inputs.pop();
+        min_2 = inputs.top();
+        inputs.pop();
         cost += (min_1 + min_2);
-        inputs.push_back(min_1 + min_2);
+        inputs.push(min_1 + min_2);
         if (inputs.size() == 1) {
             return cost;
             break;
@@ -49,7 +49,7 @@ void solve(std::istream & is, std::ostream & os) {
             break;
 
         std::getline(is, line);
-        std::vector<int> inputs = save_data(line);
+        std::priority_queue<int, vector<int>, greater<int>> inputs = save_data(line);
 
         int cost = get_total_cost(inputs);
 
