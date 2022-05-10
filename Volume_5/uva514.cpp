@@ -12,6 +12,7 @@ using hour_minute_t = std::pair<int, int>;
 #endif
 class Station {
     public:
+	Station(int max, std::string &trains);
     void init_station(const int size, std::string &trains);
     bool is_direction_b_possible();
     private:
@@ -25,7 +26,18 @@ class Station {
         int max_train;
 
 };
-using namespace std;
+Station::Station(int size, std::string &trains) {
+    std::string delimiter = " ";
+    size_t pos = 0;
+    std::string token;
+    max_train = size;
+    for (int i = 1; i <= max_train; i++) {
+        pos = trains.find(delimiter);
+        token = trains.substr(0, pos);
+        trains_direction_b.push(stoi(token));
+        trains.erase(0, pos + delimiter.length());
+    }
+}
 void Station::reset_station() {
     std::queue<int> empty;
     swap(empty, trains_direction_b);
@@ -46,7 +58,7 @@ int Station::next_train_in_station() {
 }
 
 bool Station::is_direction_b_possible() {
-    while (!direction_b_empty()) {
+    while (!trains_direction_b.empty()) {
         for (int arrival_train = 1; arrival_train <= max_train; arrival_train++) {
             if ((arrival_train) == next_train_in_direction_b()) {
                 trains_direction_b.pop();
@@ -90,11 +102,10 @@ void Station::init_station(const int size, std::string &trains) {
 }
 
 void solve(std::istream & is, std::ostream & os) {
-  
+
    std::string line;
     while(true) {
         int num;
-        class Station s;
 
         std::getline(is, line);
         int number_n = stoi(line);
@@ -106,7 +117,8 @@ void solve(std::istream & is, std::ostream & os) {
                 os << std::endl;
                 break;
             }
-            s.init_station(number_n, line);
+        	class Station s(number_n, line);
+//            s.init_station(number_n, line);
 
             if (s.is_direction_b_possible() == true) {
                 os << "Yes" << std::endl;
