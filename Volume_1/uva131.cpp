@@ -17,6 +17,12 @@ class Card {
     public:
         Card(std::string s);
         std::string getCard();
+        bool operator== (const class Card &rhs) {
+            return (number == rhs.number);
+        }
+        bool operator<(const class Card &rhs) {
+            return (number < rhs.number);
+        }
     private:
         int numberOrigToInt(const char c);
         char numberIntToOrig(const int i);
@@ -84,7 +90,7 @@ class PokerRound {
         PokerRound(std::string line);
         void generatePossibleHandCards();
         void generateBestCards();
-        std::string getCards(std::vector<class Card> cards);
+        std::string getCardsStr(std::vector<class Card> cards);
         std::string getResult();
     private:
         std::string levelToStr(PokerLevel);
@@ -94,10 +100,39 @@ class PokerRound {
         std::vector<class Card> cards_on_deck;
         std::vector<std::vector<class Card>> possible_cards;
         std::vector<int> drops;
-        PokerLevel judge(std::vector<class Card> & c);
+        PokerLevel getCategory(std::vector<class Card> & c);
+        bool isStraight(std::vector<class Card> & c);
+        bool isFlush(std::vector<class Card> & c);
         PokerLevel best_hand;
 };
 
+bool PokerRound::isStraight(std::vector<class Card> & cards) {
+    int count = 0;
+
+    for (auto it = cards.begin(); it != cards.end() - 1; it++)
+        if (((*it).number + 1) == (*(it+1)).number)
+            count += 1;
+    if (count == 4)
+        return true;
+    if ((cards[0].number == 1) &&
+        (cards[1].number == 10) &&
+        (cards[2].number == 11) &&
+        (cards[3].number == 12) &&
+        (cards[4].number == 13))
+        return true;
+    return false;
+}
+bool PokerRound::isFlush(std::vector<class Card> & cards) {
+    int same = 0;
+
+    for (auto it = cards.begin(); it != cards.end() - 1; it++)
+        if (((*it).suit) == (*(it+1)).suit)
+            same += 1;
+    if (same == 4)
+        return true;
+
+    return false;
+}
 void PokerRound::recursiveCombination(int need_drop, int delete_idx_start)
 {
     if(need_drop == 0)
@@ -159,12 +194,8 @@ void PokerRound::generatePossibleHandCards() {
 void PokerRound::generateBestCards() {
     for (auto it = possible_cards.begin(); it != possible_cards.end(); it++) {
         auto cards = *it;
-        sort(cards.begin(), cards.end(),
-        [](const class Card & a, const class Card & b) -> bool
-        {
-            return a.number <  b.number;
-        });
-        auto tmp = judge(cards);
+        std::sort(cards.begin(), cards.end());
+        auto tmp = getCategory(cards);
         if (tmp < best_hand)
             best_hand = tmp;
         if (best_hand == STRAIGHT_FLUSH)
@@ -172,29 +203,9 @@ void PokerRound::generateBestCards() {
     }
 }
 
-PokerRound::PokerLevel PokerRound::judge(std::vector<class Card> & cards) {
-    bool straight = false;
-    bool flush = false;
-
-    int count = 0;
-    for (auto it = cards.begin(); it != cards.end() - 1; it++)
-        if (((*it).number + 1) == (*(it+1)).number)
-            count += 1;
-    if (count == 4)
-        straight = true;
-    if ((cards[0].number == 1) &&
-        (cards[1].number == 10) &&
-        (cards[2].number == 11) &&
-        (cards[3].number == 12) &&
-        (cards[4].number == 13))
-        straight = true;
-
-    count = 0;
-    for (auto it = cards.begin(); it != cards.end() - 1; it++)
-        if (((*it).suit) == (*(it+1)).suit)
-            count += 1;
-    if (count == 4)
-        flush = true;
+PokerRound::PokerLevel PokerRound::getCategory(std::vector<class Card> & cards) {
+    bool straight = isStraight(cards);
+    bool flush = isFlush(cards);
 
     if (flush && straight)
         return STRAIGHT_FLUSH;
@@ -203,6 +214,7 @@ PokerRound::PokerLevel PokerRound::judge(std::vector<class Card> & cards) {
     int same_nu_part1 = 0;
     int same_nu_part2 = 0;
     int *ptr = &same_nu_part1;
+
     for (auto it = cards.begin(); it != cards.end() - 1; it++)
         if (((*it).number) == (*(it+1)).number) {
                 (*ptr)++;
@@ -210,6 +222,7 @@ PokerRound::PokerLevel PokerRound::judge(std::vector<class Card> & cards) {
             if (same_nu_part1 != 0)
                 ptr = &same_nu_part2;
         }
+
     if (same_nu_part1 == 3)
         return FOUR_OF_A_KIND;
     else if ((same_nu_part1 + same_nu_part2) == 3)
@@ -229,8 +242,11 @@ PokerRound::PokerLevel PokerRound::judge(std::vector<class Card> & cards) {
 
     return PokerLevel::HIGHEST_CARD;
 }
+
 std::string PokerRound::getResult() {
-    return "Hand:" + getCards(cards_on_hand) + " Deck:" + getCards(cards_on_deck) + " Best hand: " + levelToStr(best_hand);
+    return "Hand:" + getCardsStr(cards_on_hand) + \
+           " Deck:" + getCardsStr(cards_on_deck) + \
+           " Best hand: " + levelToStr(best_hand);
 }
 
 PokerRound::PokerRound(const std::string line) {
@@ -251,7 +267,7 @@ PokerRound::PokerRound(const std::string line) {
     best_hand = PokerLevel::HIGHEST_CARD;
 }
 
-std::string PokerRound::getCards(std::vector<class Card> cards) {
+std::string PokerRound::getCardsStr(std::vector<class Card> cards) {
     std:: string s;
     for (auto it = cards.begin(); it != cards.end(); it++) {
         auto c = *it;
@@ -262,7 +278,7 @@ std::string PokerRound::getCards(std::vector<class Card> cards) {
 
 void solve(std::istream & is, std::ostream & os) {
 
-   std::string line;
+    std::string line;
     while(getline(is, line)) {
         class PokerRound r(line);
         r.generatePossibleHandCards();
