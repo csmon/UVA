@@ -66,7 +66,7 @@ public:
         up_group.push_back(coins);
     }
 
-    char updateGroupToEven(char c) {
+    char getCounterfeitCoin(char c) {
 
         for (auto it = coins_status.begin(); it != coins_status.end(); it++) {
             if (it->second == EVEN) {
@@ -127,7 +127,7 @@ public:
         for (auto it = coins_status.begin(); it != coins_status.end(); it++) {
             char c = it->first;
             if (it->second == EVEN) {
-                if(updateGroupToEven(c) != 0)
+                if(getCounterfeitCoin(c) != 0)
                     break;
             }
         }
